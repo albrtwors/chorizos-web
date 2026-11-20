@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type PointerEvent,
-} from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import ModelViewer from "./ModelViewer";
-import type { ProductMedia } from "./product-media";
+import type { ProductMedia, ProductModelMedia } from "./product-media";
 import styles from "./ProductViewer.module.css";
 
 type Tone = "cream" | "gold" | "ember" | "noir";
@@ -17,122 +11,43 @@ type Variant = "hero" | "card" | "showcase";
 type ProductViewerProps = {
   variant?: Variant;
   tone?: Tone;
-  interactive?: boolean;
   className?: string;
   name?: string;
   weight?: string;
   kicker?: string;
   subline?: string;
   media?: ProductMedia;
+  viewIndex?: number;
+  showIngredients?: boolean;
+  pointerReactive?: boolean;
+  heroIntroBoost?: boolean;
 };
-
-type Rotation = {
-  x: number;
-  y: number;
-};
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
 
 export default function ProductViewer({
   variant = "card",
   tone = "cream",
-  interactive = false,
   className,
   name = "Chorizo de Pollo",
   weight = "500 g",
   kicker = "Línea premium",
   subline = "Parrilla · Artesanal",
   media,
+  viewIndex = 1,
+  showIngredients = false,
+  pointerReactive = false,
+  heroIntroBoost = false,
 }: ProductViewerProps) {
-  const [rotation, setRotation] = useState<Rotation>({ x: -7, y: -18 });
-  const [dragging, setDragging] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
-  const drag = useRef({
-    active: false,
-    startX: 0,
-    startY: 0,
-    baseX: -7,
-    baseY: -18,
-  });
 
   useEffect(() => {
     setMediaFailed(false);
   }, [media]);
 
   const showPlaceholder = !media || media.type === "placeholder" || mediaFailed;
-  const usesModel = media?.type === "model" && !mediaFailed;
-  const manualRotation = showPlaceholder || media?.type === "image";
-
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (!interactive || !manualRotation) return;
-
-    if (event.pointerType === "touch" && variant === "hero") return;
-
-    drag.current = {
-      active: true,
-      startX: event.clientX,
-      startY: event.clientY,
-      baseX: rotation.x,
-      baseY: rotation.y,
-    };
-
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragging(true);
-  };
-
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!drag.current.active || !manualRotation) return;
-
-    const deltaX = event.clientX - drag.current.startX;
-    const deltaY = event.clientY - drag.current.startY;
-
-    setRotation({
-      x: clamp(drag.current.baseX - deltaY * 0.22, -26, 26),
-      y: clamp(drag.current.baseY + deltaX * 0.38, -62, 62),
-    });
-  };
-
-  const endDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (!drag.current.active) return;
-
-    drag.current.active = false;
-    setDragging(false);
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!interactive || !manualRotation) return;
-
-    const step = event.shiftKey ? 14 : 6;
-    let next: Rotation | null = null;
-
-    if (event.key === "ArrowLeft") {
-      next = { ...rotation, y: clamp(rotation.y - step, -62, 62) };
-    } else if (event.key === "ArrowRight") {
-      next = { ...rotation, y: clamp(rotation.y + step, -62, 62) };
-    } else if (event.key === "ArrowUp") {
-      next = { ...rotation, x: clamp(rotation.x - step, -26, 26) };
-    } else if (event.key === "ArrowDown") {
-      next = { ...rotation, x: clamp(rotation.x + step, -26, 26) };
-    }
-
-    if (next) {
-      event.preventDefault();
-      setRotation(next);
-    }
-  };
-
   const style = {
-    "--rx": `${rotation.x}deg`,
-    "--ry": `${rotation.y}deg`,
+    "--rx": "-7deg",
+    "--ry": "-18deg",
   } as CSSProperties;
-
-  const accessibleLabel =
-    media && media.type !== "placeholder" ? media.alt ?? name : name;
 
   const renderMedia = () => {
     if (showPlaceholder) {
@@ -198,9 +113,12 @@ export default function ProductViewer({
 
     return (
       <ModelViewer
-        media={media}
-        label={accessibleLabel}
+        media={media as ProductModelMedia}
         className={styles.mediaLayer}
+        viewIndex={viewIndex}
+        showIngredients={showIngredients}
+        pointerReactive={pointerReactive}
+        heroIntroBoost={heroIntroBoost}
         onError={() => setMediaFailed(true)}
       />
     );
@@ -209,34 +127,12 @@ export default function ProductViewer({
   return (
     <div
       className={`${styles.scene} ${styles[variant]} ${styles[tone]} ${
-        interactive ? styles.interactive : ""
-      } ${dragging ? styles.dragging : ""} ${className ?? ""}`}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
-      onKeyDown={handleKeyDown}
-      data-drag-ignore={interactive ? "" : undefined}
-      tabIndex={interactive && !usesModel ? 0 : undefined}
-      role={interactive && !usesModel ? "img" : undefined}
-      aria-label={
-        interactive && !usesModel
-          ? `${accessibleLabel}. Arrastra o usa las flechas para girar el empaque.`
-          : undefined
-      }
-      aria-hidden={interactive || usesModel ? undefined : true}
+        className ?? ""
+      }`}
+      aria-hidden="true"
     >
       <span className={styles.halo} aria-hidden="true" />
       {renderMedia()}
-
-      {interactive ? (
-        <span className={styles.hint}>
-          Arrastra para girar
-          <span className={styles.hintIcon} aria-hidden="true">
-            ↺
-          </span>
-        </span>
-      ) : null}
     </div>
   );
 }

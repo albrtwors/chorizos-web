@@ -11,52 +11,73 @@ import {
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ProductViewer from "./ProductViewer";
-import { placeholderMedia, productMedia } from "./product-media";
+import {
+  featuredProduct,
+  products,
+  buildCatalogWhatsAppUrl,
+  buildProductWhatsAppUrl,
+  type Product,
+} from "./product-data";
+import { productMedia } from "./product-media";
 import styles from "./ProductShowcase.module.css";
 
-type Product = {
-  index: string;
-  name: string;
-  weight: string;
-  note: string;
-  tone: "cream" | "gold" | "ember" | "noir";
-  ingredients: string[];
-};
+function ViewerSlot({
+  viewerKey,
+  product,
+  variant,
+  viewIndex,
+}: {
+  viewerKey: string;
+  product: Product;
+  variant: "showcase" | "card";
+  viewIndex: number;
+}) {
+  const media =
+    viewIndex === 2
+      ? productMedia.feature
+      : productMedia.cards[viewerKey] ?? productMedia.feature;
 
-const products: Product[] = [
-  {
-    index: "02",
-    name: "Pollo & Pimentón",
-    weight: "500 g",
-    note: "Pimentón ahumado con un fondo dulce que se agarra a la brasa y no suelta el aroma.",
-    tone: "gold",
-    ingredients: ["Pollo", "Pimentón", "Ajo"],
-  },
-  {
-    index: "03",
-    name: "Ahumado Artesanal",
-    weight: "450 g",
-    note: "Curado lento con humo de leña. Intenso, redondo y hecho para comerse sin prisa.",
-    tone: "ember",
-    ingredients: ["Pollo", "Humo de leña", "Comino"],
-  },
-  {
-    index: "04",
-    name: "Picante de la Casa",
-    weight: "500 g",
-    note: "Ají dulce y un golpe de guayabita. El calor justo para quien sabe pedir más.",
-    tone: "noir",
-    ingredients: ["Pollo", "Ají", "Vinagre"],
-  },
-  {
-    index: "05",
-    name: "Trío Parrillero",
-    weight: "3 × 400 g",
-    note: "Los tres clásicos de la casa en una sola caja. La excusa perfecta para encender el fuego.",
-    tone: "cream",
-    ingredients: ["Clásico", "Ahumado", "Picante"],
-  },
-];
+  return (
+    <div className={styles.viewerSlot}>
+      <ProductViewer
+        variant={variant}
+        tone={product.tone}
+        name={product.name}
+        weight={product.weight}
+        media={media}
+        viewIndex={viewIndex}
+      />
+    </div>
+  );
+}
+
+function PriceBadge({ product }: { product: Product }) {
+  return (
+    <span className={`${styles.priceBadge} inline-flex items-center`}>
+      Ref. ${product.price} · {product.weight}
+    </span>
+  );
+}
+
+function OrderButton({
+  product,
+  className,
+}: {
+  product: Product;
+  className?: string;
+}) {
+  return (
+    <a
+      href={buildProductWhatsAppUrl(product)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`${styles.orderBtn} ${className ?? ""}`}
+    >
+      Pedir por WhatsApp
+      <span aria-hidden="true">↗</span>
+    </a>
+  );
+}
 
 export default function ProductShowcase() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -105,28 +126,64 @@ export default function ProductShowcase() {
     const mm = gsap.matchMedia();
 
     mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const items = gsap.utils.toArray<HTMLElement>(
-        "[data-showcase-reveal]",
-        sectionRef.current
-      );
+      const ctx = gsap.context(() => {
+        const lines = gsap.utils.toArray<HTMLElement>(
+          "[data-showcase-line] > span",
+          sectionRef.current
+        );
 
-      const reveal = gsap.from(items, {
-        y: 48,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.08,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 74%",
-          once: true,
-        },
-      });
+        const reveal = gsap.from(lines, {
+          yPercent: 110,
+          duration: 1.1,
+          stagger: 0.12,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 74%",
+            once: true,
+          },
+        });
 
-      return () => {
-        reveal.scrollTrigger?.kill();
-        reveal.kill();
-      };
+        const items = gsap.utils.toArray<HTMLElement>(
+          "[data-showcase-reveal]",
+          sectionRef.current
+        );
+
+        const extras = gsap.from(items, {
+          y: 40,
+          opacity: 0,
+          duration: 0.9,
+          stagger: 0.07,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 70%",
+            once: true,
+          },
+        });
+
+        gsap.utils
+          .toArray<HTMLElement>("[data-showcase-parallax]", sectionRef.current)
+          .forEach((item, index) => {
+            gsap.to(item, {
+              yPercent: index % 2 === 0 ? -7 : 5,
+              ease: "none",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: 1.2,
+              },
+            });
+          });
+
+        return () => {
+          reveal.kill();
+          extras.kill();
+        };
+      }, sectionRef);
+
+      return () => ctx.revert();
     });
 
     return () => mm.revert();
@@ -201,7 +258,12 @@ export default function ProductShowcase() {
   };
 
   return (
-    <section ref={sectionRef} id="catalogo" className={styles.section}>
+    <section
+      ref={sectionRef}
+      id="catalogo"
+      data-nav-theme="light"
+      className={styles.section}
+    >
       <div className={styles.header}>
         <div className={styles.headingBlock} data-showcase-reveal>
           <p className={styles.eyebrow}>
@@ -209,17 +271,22 @@ export default function ProductShowcase() {
             Catálogo 2026
           </p>
           <h2 className={styles.title}>
-            Otras formas
-            <br />
-            de <em>encender</em> la parrilla.
+            <span className={styles.titleMask} data-showcase-line>
+              <span>Otras formas</span>
+            </span>
+            <span className={styles.titleMask} data-showcase-line>
+              <span>
+                de <em>encender</em> la parrilla.
+              </span>
+            </span>
           </h2>
         </div>
 
         <div className={styles.aside} data-showcase-reveal>
           <p className={styles.lead}>
             Cinco presentaciones, una misma obsesión: que cada chorizo llegue
-            al fuego con carácter propio. Desliza, gira el empaque y elige tu
-            próxima parrilla.
+            al fuego con carácter propio. Elige tu próxima parrilla y pide
+            directo por WhatsApp.
           </p>
 
           <div className={styles.controls}>
@@ -260,34 +327,33 @@ export default function ProductShowcase() {
             data-showcase-reveal
           >
             <div className={styles.featureViewer}>
-              <span className={styles.viewerLabel}>
-                <span className={styles.viewerDot} aria-hidden="true" />
-                Visor 3D · arrastra
+              <span
+                className={styles.cardIndex}
+                data-showcase-parallax
+                aria-hidden="true"
+              >
+                01
               </span>
               <div className={styles.featurePack}>
-                <ProductViewer
+                <ViewerSlot
+                  viewerKey="feature"
+                  product={featuredProduct}
                   variant="showcase"
-                  tone="cream"
-                  interactive
-                  name="Chorizo de Pollo"
-                  media={productMedia.feature}
+                  viewIndex={2}
                 />
               </div>
             </div>
 
             <div className={styles.featureInfo}>
               <span className={styles.kicker}>01 · La estrella</span>
-              <h3 className={styles.featureTitle}>Chorizo de Pollo</h3>
-              <p className={styles.featureText}>
-                El equilibrio exacto entre pollo seleccionado, especias
-                naturales y un curado que respeta el tiempo. Crujiente por
-                fuera, jugoso por dentro.
-              </p>
+              <h3 className={styles.featureTitle}>{featuredProduct.name}</h3>
+              <p className={styles.featureText}>{featuredProduct.note}</p>
+              <PriceBadge product={featuredProduct} />
 
               <dl className={styles.specs}>
                 <div>
                   <dt>Peso</dt>
-                  <dd>500 g</dd>
+                  <dd>{featuredProduct.weight}</dd>
                 </div>
                 <div>
                   <dt>Formato</dt>
@@ -299,16 +365,16 @@ export default function ProductShowcase() {
                 </div>
               </dl>
 
-              <ul className={styles.chips}>
-                <li>100% pollo</li>
-                <li>Sin gluten</li>
-                <li>Sin conservantes</li>
+              <ul className={styles.chips} data-showcase-parallax>
+                {featuredProduct.ingredients.map((ingredient) => (
+                  <li key={ingredient}>{ingredient}</li>
+                ))}
               </ul>
 
-              <a href="#contacto" className={styles.cardCta}>
-                Hacer pedido
-                <span aria-hidden="true">→</span>
-              </a>
+              <OrderButton
+                product={featuredProduct}
+                className={styles.cardCta}
+              />
             </div>
           </article>
 
@@ -319,14 +385,19 @@ export default function ProductShowcase() {
               data-showcase-reveal
             >
               <div className={styles.packStage}>
-                <span className={styles.cardIndex}>{product.index}</span>
+                <span
+                  className={styles.cardIndex}
+                  data-showcase-parallax
+                  aria-hidden="true"
+                >
+                  {product.index}
+                </span>
                 <div className={styles.pack}>
-                  <ProductViewer
+                  <ViewerSlot
+                    viewerKey={product.index}
+                    product={product}
                     variant="card"
-                    tone={product.tone}
-                    name={product.name}
-                    weight={product.weight}
-                    media={productMedia.cards[product.index] ?? placeholderMedia}
+                    viewIndex={Number(product.index) + 1}
                   />
                 </div>
               </div>
@@ -336,12 +407,14 @@ export default function ProductShowcase() {
                   <h3>{product.name}</h3>
                   <span className={styles.weight}>{product.weight}</span>
                 </div>
+                <PriceBadge product={product} />
                 <p>{product.note}</p>
-                <ul className={styles.chips}>
+                <ul className={styles.chips} data-showcase-parallax>
                   {product.ingredients.map((ingredient) => (
                     <li key={ingredient}>{ingredient}</li>
                   ))}
                 </ul>
+                <OrderButton product={product} className={styles.cardOrder} />
               </div>
             </article>
           ))}
@@ -365,9 +438,14 @@ export default function ProductShowcase() {
                 que el fuego se comparte.
               </p>
             </div>
-            <a href="#contacto" className={styles.ctaLink}>
+            <a
+              href={buildCatalogWhatsAppUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.ctaLink}
+            >
               Pedir catálogo
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true">↗</span>
             </a>
           </article>
         </div>

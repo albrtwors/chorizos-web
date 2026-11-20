@@ -1,11 +1,43 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null);
+  const [light, setLight] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const updateTheme = () => {
+      const sampleY = Math.min(96, window.innerHeight * 0.12);
+      const underNav = document.elementFromPoint(window.innerWidth / 2, sampleY);
+      const section = underNav?.closest<HTMLElement>("[data-nav-theme]");
+      setLight(section?.dataset.navTheme === "light");
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        updateTheme();
+      });
+    };
+
+    updateTheme();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    window.__lenis?.on("scroll", scheduleUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      window.__lenis?.off("scroll", scheduleUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -44,7 +76,11 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header ref={navRef} className={styles.nav}>
+    <header
+      ref={navRef}
+      className={`${styles.nav} ${light ? styles.light : ""}`}
+      data-theme={light ? "light" : "dark"}
+    >
       <a
         className={styles.brand}
         href="#inicio"

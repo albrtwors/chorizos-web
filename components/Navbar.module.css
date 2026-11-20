@@ -7,7 +7,18 @@
   justify-content: space-between;
   gap: 1rem;
   padding: clamp(1rem, 2.4vw, 1.6rem) var(--page-pad);
+  border-bottom: 1px solid transparent;
   pointer-events: none;
+  transition:
+    background 0.45s var(--ease-organic),
+    border-color 0.45s var(--ease-organic);
+}
+
+.nav.light {
+  border-bottom-color: rgba(20, 20, 20, 0.1);
+  background: rgba(244, 241, 234, 0.86);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
 .nav > * {
@@ -41,8 +52,12 @@
   font-size: clamp(0.72rem, 1vw, 0.95rem);
   letter-spacing: 0.09em;
   color: var(--bone);
-  mix-blend-mode: difference;
   white-space: nowrap;
+  transition: color 0.45s var(--ease-organic);
+}
+
+.nav.light .brandWord {
+  color: var(--ink);
 }
 
 .centerPill {

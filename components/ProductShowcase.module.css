@@ -58,6 +58,16 @@
   font-style: normal;
 }
 
+.titleMask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.06em;
+}
+
+.titleMask > span {
+  display: block;
+}
+
 .aside {
   display: flex;
   flex-direction: column;
@@ -202,34 +212,9 @@
   overflow: hidden;
 }
 
-.viewerLabel {
-  position: absolute;
-  top: clamp(1rem, 1.8vw, 1.5rem);
-  left: 50%;
-  z-index: 6;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.8rem;
-  border: 1px solid rgba(20, 20, 20, 0.1);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  color: rgba(20, 20, 20, 0.67);
-  font-size: 0.53rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transform: translateX(-50%);
-}
-
-.viewerDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ember);
+.viewerSlot {
+  position: relative;
+  width: 100%;
 }
 
 .featurePack {
@@ -429,6 +414,48 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   white-space: nowrap;
+}
+
+.priceBadge {
+  align-self: flex-start;
+  margin-top: 0.85rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bone);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.orderBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f0bd5d 0%, var(--gold) 100%);
+  color: var(--ink);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    background 0.35s var(--ease-organic),
+    transform 0.35s var(--ease-organic);
+}
+
+.orderBtn:hover {
+  background: var(--bone);
+  transform: translateY(-2px);
+}
+
+.cardOrder {
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .productInfo p {
@@ -656,6 +683,119 @@
   }
 
   .captionLabel:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 var(--page-pad);
+  }
+
+  .controls {
+    display: none;
+  }
+
+  .viewport {
+    overflow: visible;
+    cursor: default;
+    scroll-snap-type: none;
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+
+  .track {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    width: 100%;
+    gap: 0.75rem;
+    padding: 1.25rem var(--page-pad) 0;
+  }
+
+  .card {
+    width: auto;
+    min-height: 0;
+    border-radius: 1.25rem;
+    scroll-snap-align: none;
+  }
+
+  .featureCard,
+  .productCard {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+  }
+
+  .featureViewer,
+  .packStage {
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: 1;
+    padding: 0.5rem;
+    border-radius: 1rem;
+  }
+
+  .featurePack,
+  .pack {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .featureInfo,
+  .productInfo {
+    padding: 0.7rem 0.3rem 0.35rem;
+  }
+
+  .kicker {
+    font-size: 0.46rem;
+  }
+
+  .featureTitle,
+  .productRow h3 {
+    margin-top: 0.4rem;
+    font-size: clamp(0.92rem, 3.6vw, 1.15rem);
+  }
+
+  .featureText,
+  .specs,
+  .productInfo p,
+  .productInfo .chips {
+    display: none;
+  }
+
+  .priceBadge {
+    margin-top: 0.6rem;
+    padding: 0.36rem 0.55rem;
+    font-size: 0.46rem;
+  }
+
+  .orderBtn {
+    width: 100%;
+    margin-top: 0.6rem;
+    padding: 0.72rem 0.6rem;
+    font-size: 0.46rem;
+  }
+
+  .ctaCard {
+    grid-column: 1 / -1;
+    min-height: 0;
+    padding: 1.25rem;
+  }
+
+  .ctaBody {
+    padding: 1.25rem 0 1rem;
+  }
+
+  .ctaBody h3 {
+    font-size: 1.7rem;
+  }
+
+  .ctaBody p {
+    max-width: none;
+  }
+
+  .caption {
     display: none;
   }
 }

@@ -13,14 +13,16 @@ export type ProductImageMedia = {
 export type ProductModelMedia = {
   type: "model";
   src: string;
-  poster?: string;
   alt?: string;
   autoRotate?: boolean;
+  displayScale?: number;
+  rotationY?: number;
+  rotationSpeed?: number;
+  fieldOfView?: number;
   cameraOrbit?: string;
   minCameraOrbit?: string;
   maxCameraOrbit?: string;
   cameraTarget?: string;
-  fieldOfView?: number;
   exposure?: number;
   shadowIntensity?: number;
   environmentImage?: string;
@@ -35,6 +37,8 @@ export const placeholderMedia: ProductPlaceholderMedia = {
   type: "placeholder",
 };
 
+export const HERO_MODEL_SRC = "/models/Sausagesglb-draco.glb";
+
 export const exampleImageMedia: ProductImageMedia = {
   type: "image",
   src: "/images/tu-imagen.webp",
@@ -45,7 +49,7 @@ export const exampleImageMedia: ProductImageMedia = {
 
 export const exampleModelMedia: ProductModelMedia = {
   type: "model",
-  src: "/models/Sausagesglb.glb",
+  src: HERO_MODEL_SRC,
   alt: "Chorizo de pollo Tres Gustavos",
   autoRotate: true,
   cameraOrbit: "0deg 75deg 105%",
@@ -55,12 +59,16 @@ export const exampleModelMedia: ProductModelMedia = {
   exposure: 1,
   shadowIntensity: 0.6,
   environmentImage: "neutral",
+  displayScale: 3.6,
+  rotationSpeed: 0.16,
 };
 
 export const heroModelMedia: ProductModelMedia = {
   ...exampleModelMedia,
   cameraOrbit: "0deg 75deg 100%",
   fieldOfView: 36,
+  displayScale: 3.6,
+  rotationSpeed: 0.2,
 };
 
 export const productMedia: {
@@ -69,11 +77,40 @@ export const productMedia: {
   cards: Record<string, ProductMedia>;
 } = {
   hero: heroModelMedia,
-  feature: exampleModelMedia,
+  feature: {
+    ...exampleModelMedia,
+    displayScale: 3.25,
+    rotationY: 0.18,
+    rotationSpeed: 0.14,
+  },
   cards: {
-    "02": { ...exampleModelMedia, autoRotate: false },
-    "03": { ...exampleModelMedia, autoRotate: false },
-    "04": { ...exampleModelMedia, autoRotate: false },
-    "05": { ...exampleModelMedia, autoRotate: false },
+    "02": {
+      ...exampleModelMedia,
+      displayScale: 3,
+      fieldOfView: 42,
+      rotationY: 0.15,
+      rotationSpeed: 0.12,
+    },
+    "03": {
+      ...exampleModelMedia,
+      displayScale: 3,
+      fieldOfView: 42,
+      rotationY: -0.35,
+      rotationSpeed: 0.12,
+    },
+    "04": {
+      ...exampleModelMedia,
+      displayScale: 3,
+      fieldOfView: 42,
+      rotationY: 0.55,
+      rotationSpeed: 0.12,
+    },
+    "05": {
+      ...exampleModelMedia,
+      displayScale: 3,
+      fieldOfView: 42,
+      rotationY: -0.6,
+      rotationSpeed: 0.12,
+    },
   },
 };

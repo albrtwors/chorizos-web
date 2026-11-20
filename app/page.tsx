@@ -4,10 +4,12 @@ import CurveTransition from "@/components/CurveTransition";
 import AttributesScroll from "@/components/AttributesScroll";
 import ProductShowcase from "@/components/ProductShowcase";
 import FooterCTA from "@/components/FooterCTA";
+import SharedModelCanvas from "@/components/SharedModelCanvas";
 
 export default function Home() {
   return (
     <>
+      <SharedModelCanvas />
       <Navbar />
       <main>
         <HeroSection />

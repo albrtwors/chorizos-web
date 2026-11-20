@@ -190,7 +190,12 @@ export default function AttributesScroll() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="atributos" className={styles.section}>
+    <section
+      ref={sectionRef}
+      id="atributos"
+      data-nav-theme="light"
+      className={styles.section}
+    >
       <div ref={pinRef} className={styles.pin}>
         <div className={styles.head}>
           <div className={styles.headingBlock}>

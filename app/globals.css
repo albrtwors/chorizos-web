@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --ink: #141414;
   --ink-soft: #1c1c1c;
@@ -16,6 +18,16 @@
   --radius-xl: clamp(2rem, 3.4vw, 3.4rem);
   --ease-organic: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-soft: cubic-bezier(0.65, 0.05, 0, 1);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-bone: var(--bone);
+  --color-sand: var(--sand);
+  --color-gold: var(--gold);
+  --color-ember: var(--ember);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
 }
 
 *,

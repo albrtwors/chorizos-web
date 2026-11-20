@@ -4,11 +4,15 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import styles from "./FooterCTA.module.css";
+import {
+  WHATSAPP_NUMBER,
+  buildGeneralWhatsAppUrl,
+} from "./product-data";
 
 const contact = {
-  whatsapp: "https://wa.me/584240000000",
+  whatsapp: buildGeneralWhatsAppUrl(),
   phone: "+58 424 000 0000",
-  phoneHref: "tel:+584240000000",
+  phoneHref: `tel:+${WHATSAPP_NUMBER}`,
   instagram: "https://instagram.com/tresgustavos",
   email: "hola@tresgustavos.com",
 };
