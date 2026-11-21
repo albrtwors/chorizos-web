@@ -141,7 +141,8 @@ export default function ProductShowcase() {
         );
 
         const extras = gsap.from(items, {
-          y: 40,
+          y: (_, element: HTMLElement) =>
+            element.hasAttribute("data-catalog-card") ? 0 : 40,
           opacity: 0,
           duration: 0.9,
           stagger: 0.07,
@@ -152,21 +153,6 @@ export default function ProductShowcase() {
             once: true,
           },
         });
-
-        gsap.utils
-          .toArray<HTMLElement>("[data-showcase-parallax]", sectionRef.current)
-          .forEach((item, index) => {
-            gsap.to(item, {
-              yPercent: index % 2 === 0 ? -7 : 5,
-              ease: "none",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: 1.2,
-              },
-            });
-          });
 
         return () => {
           reveal.kill();
@@ -185,6 +171,21 @@ export default function ProductShowcase() {
         );
         const viewport = viewportRef.current;
         if (!track || !viewport) return;
+
+        const parallax = gsap.utils
+          .toArray<HTMLElement>("[data-showcase-parallax]", sectionRef.current)
+          .map((item, index) =>
+            gsap.to(item, {
+              yPercent: index % 2 === 0 ? -7 : 5,
+              ease: "none",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: 1.2,
+              },
+            })
+          );
 
         const distance = () => {
           const value = Math.max(0, track.scrollWidth - viewport.clientWidth);
@@ -217,6 +218,10 @@ export default function ProductShowcase() {
           horizontalRef.current = null;
           horizontal.scrollTrigger?.kill();
           horizontal.kill();
+          parallax.forEach((tween) => {
+            tween.scrollTrigger?.kill();
+            tween.kill();
+          });
           gsap.set(track, { x: 0 });
         };
       }
@@ -317,7 +322,7 @@ export default function ProductShowcase() {
 
       <div
         ref={viewportRef}
-        className={`no-scrollbar ${styles.viewport} scroll-smooth snap-x snap-mandatory`}
+        className={`no-scrollbar ${styles.viewport}`}
       >
         <div data-showcase-track className={styles.track}>
           <article

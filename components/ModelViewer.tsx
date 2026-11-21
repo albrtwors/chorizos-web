@@ -70,8 +70,10 @@ export function ModelScene({
     const group = groupRef.current;
     if (!group) return;
 
+    const step = Math.min(delta, 0.05);
+
     if (autoRotate) {
-      group.rotation.y += delta * (media.rotationSpeed ?? 0.14);
+      group.rotation.y += step * (media.rotationSpeed ?? 0.14);
     }
 
     if (pointerReactive) {

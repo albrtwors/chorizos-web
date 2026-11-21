@@ -360,9 +360,9 @@
   }
 
   .productIntro {
-    width: min(88vw, 420px);
-    height: 52vh;
-    min-height: 280px;
+    width: min(66vw, 310px);
+    height: 42vh;
+    min-height: 220px;
     translate: -4vw 0;
   }
 

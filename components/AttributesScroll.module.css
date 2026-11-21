@@ -116,7 +116,7 @@
   padding: clamp(1.5rem, 4vh, 3rem) 0;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -382,8 +382,8 @@
   .viewport {
     overflow-x: auto;
     overflow-y: hidden;
-    scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
+    scroll-behavior: auto;
+    scroll-snap-type: x proximity;
     scroll-padding-inline: var(--page-pad);
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;

@@ -306,7 +306,7 @@ export default function AttributesScroll() {
 
         <div
           ref={viewportRef}
-          className={`no-scrollbar ${styles.viewport} scroll-smooth snap-x snap-mandatory`}
+          className={`no-scrollbar ${styles.viewport}`}
         >
           <div ref={trackRef} className={styles.track}>
             {attributes.map((attribute) => (

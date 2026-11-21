@@ -92,7 +92,6 @@ export default function HeroSection() {
             {
               y: 70,
               opacity: 0,
-              scale: 0.92,
               duration: 1.6,
             },
             0.32
