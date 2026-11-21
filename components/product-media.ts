@@ -37,7 +37,7 @@ export const placeholderMedia: ProductPlaceholderMedia = {
   type: "placeholder",
 };
 
-export const HERO_MODEL_SRC = "/models/Sausagesglb-draco.glb";
+export const HERO_MODEL_SRC = "/models/Sausagesglb.glb";
 
 export const exampleImageMedia: ProductImageMedia = {
   type: "image",
