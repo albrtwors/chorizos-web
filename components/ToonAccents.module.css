@@ -1,0 +1,24 @@
+.accents {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px rgba(229, 169, 60, 0.22));
+}
+
+@media (max-width: 767px) {
+  .svg {
+    width: 92%;
+    height: 92%;
+    margin: 4%;
+    opacity: 0.78;
+  }
+}

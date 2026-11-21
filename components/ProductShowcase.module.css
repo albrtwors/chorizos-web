@@ -133,6 +133,16 @@
   display: none;
 }
 
+@media (min-width: 900px) {
+  .viewport {
+    overflow: hidden;
+    cursor: default;
+    scroll-snap-type: none;
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+}
+
 @media (hover: none) {
   .viewport {
     scroll-snap-type: x proximity;
@@ -215,11 +225,14 @@
 .viewerSlot {
   position: relative;
   width: 100%;
+  height: 100%;
 }
 
 .featurePack {
   width: clamp(180px, 19vw, 285px);
   max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
 }
 
 .featureInfo {
@@ -380,6 +393,8 @@
 .pack {
   width: clamp(142px, 14.5vw, 188px);
   max-width: 72%;
+  max-height: 100%;
+  aspect-ratio: 1;
 }
 
 .productInfo {
@@ -715,6 +730,7 @@
 
   .card {
     width: auto;
+    height: 100%;
     min-height: 0;
     border-radius: 1.25rem;
     scroll-snap-align: none;
@@ -724,26 +740,36 @@
   .productCard {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
     padding: 0.5rem;
   }
 
   .featureViewer,
   .packStage {
+    position: relative;
     width: 100%;
     min-height: 0;
     aspect-ratio: 1;
     padding: 0.5rem;
+    overflow: hidden;
     border-radius: 1rem;
   }
 
   .featurePack,
   .pack {
     width: 100%;
+    height: auto;
     max-width: 100%;
+    max-height: 100%;
   }
 
   .featureInfo,
   .productInfo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-end;
     padding: 0.7rem 0.3rem 0.35rem;
   }
 
@@ -772,7 +798,7 @@
 
   .orderBtn {
     width: 100%;
-    margin-top: 0.6rem;
+    margin-top: auto;
     padding: 0.72rem 0.6rem;
     font-size: 0.46rem;
   }

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ProductViewer from "./ProductViewer";
-import { heroIntro } from "./hero-intro";
+import ToonAccents from "./ToonAccents";
 import { productMedia } from "./product-media";
 import styles from "./HeroSection.module.css";
 
@@ -19,16 +19,24 @@ export default function HeroSection() {
   const productParallaxRef = useRef<HTMLDivElement>(null);
   const productFrameRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
+  const [dragEnabled, setDragEnabled] = useState(true);
 
   const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 767px) and (hover: none)");
+    const sync = () => setDragEnabled(!query.matches);
+
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
 
   useIsomorphicLayoutEffect(() => {
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-
-    heroIntro.progress = reduceMotion ? 1 : 0;
 
     if (reduceMotion && productFrameRef.current) {
       gsap.set(productFrameRef.current, { scale: 1, x: 0, y: 0 });
@@ -50,10 +58,13 @@ export default function HeroSection() {
         }
         const frameRect = frame?.getBoundingClientRect();
         const fullscreenScale = frameRect
-          ? Math.max(
-              window.innerWidth / frameRect.width,
-              window.innerHeight / frameRect.height
-            ) * 1.16
+          ? Math.min(
+              Math.max(
+                window.innerWidth / frameRect.width,
+                window.innerHeight / frameRect.height
+              ) * 1.16,
+              1.3
+            )
           : 1;
         const fullscreenX = frameRect
           ? window.innerWidth / 2 - (frameRect.left + frameRect.width / 2)
@@ -61,8 +72,6 @@ export default function HeroSection() {
         const fullscreenY = frameRect
           ? window.innerHeight / 2 - (frameRect.top + frameRect.height / 2)
           : 0;
-        const introState = { progress: 0 };
-
         const intro = gsap.timeline({
           defaults: { ease: "power4.out" },
           delay: 0.15,
@@ -101,18 +110,6 @@ export default function HeroSection() {
               y: 0,
               duration: 1.9,
               ease: "power4.out",
-            },
-            0.14
-          )
-          .to(
-            introState,
-            {
-              progress: 1,
-              duration: 1.9,
-              ease: "power4.out",
-              onUpdate: () => {
-                heroIntro.progress = introState.progress;
-              },
             },
             0.14
           )
@@ -172,10 +169,7 @@ export default function HeroSection() {
         });
       });
 
-      return () => {
-        ctx.revert();
-        heroIntro.progress = 1;
-      };
+      return () => ctx.revert();
     });
 
     return () => mm.revert();
@@ -224,15 +218,41 @@ export default function HeroSection() {
                     variant="hero"
                     tone="cream"
                     media={productMedia.hero}
-                    showIngredients
                     pointerReactive
-                    heroIntroBoost
+                    dragEnabled={dragEnabled}
+                    fill
                   />
+                  <ToonAccents triggerRef={sectionRef} />
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <button
+          type="button"
+          className={`${styles.rotateToggle} ${dragEnabled ? styles.rotateActive : ""}`}
+          onClick={() => setDragEnabled((current) => !current)}
+          aria-pressed={dragEnabled}
+          aria-label={`Rotación 3D: ${dragEnabled ? "activada" : "desactivada"}. Toca para ${dragEnabled ? "desactivarla" : "activarla"}.`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M20 12a8 8 0 1 1-2.34-5.66"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M20 4v4h-4"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Rotar 3D: {dragEnabled ? "ON" : "OFF"}
+        </button>
       </div>
 
       <div ref={footerRef} className={styles.footer}>

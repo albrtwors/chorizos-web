@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import styles from "./AttributesScroll.module.css";
@@ -104,14 +104,75 @@ function AttributeIcon({ name }: { name: IconName }) {
 export default function AttributesScroll() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLSpanElement>(null);
+  const horizontalRef = useRef<ScrollTrigger | null>(null);
+  const distanceRef = useRef(0);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  const setProgress = useCallback((value: number) => {
+    if (progressRef.current) {
+      progressRef.current.style.transform = `scaleX(${Math.min(Math.max(value, 0), 1)})`;
+    }
+  }, []);
+
+  const updateProgress = useCallback(() => {
+    if (horizontalRef.current) return;
+
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const max = viewport.scrollWidth - viewport.clientWidth;
+    const progress = max > 0 ? viewport.scrollLeft / max : 0;
+
+    setAtStart(viewport.scrollLeft <= 8);
+    setAtEnd(max <= 8 || viewport.scrollLeft >= max - 8);
+    setProgress(progress);
+  }, [setProgress]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    updateProgress();
+    viewport.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+
+    return () => {
+      viewport.removeEventListener("scroll", updateProgress);
+      window.removeEventListener("resize", updateProgress);
+    };
+  }, [updateProgress]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
     const mm = gsap.matchMedia();
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const track = trackRef.current;
+      if (!track) return;
+
+      const entrance = gsap.from(Array.from(track.children), {
+        y: 54,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.08,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 78%",
+          once: true,
+        },
+      });
+
+      return () => {
+        entrance.scrollTrigger?.kill();
+        entrance.kill();
+      };
+    });
 
     mm.add(
       "(min-width: 900px) and (prefers-reduced-motion: no-preference)",
@@ -119,11 +180,13 @@ export default function AttributesScroll() {
         const track = trackRef.current;
         const pin = pinRef.current;
         const viewport = viewportRef.current;
-
         if (!track || !pin || !viewport) return;
 
-        const distance = () =>
-          Math.max(0, track.scrollWidth - viewport.clientWidth);
+        const distance = () => {
+          const value = Math.max(0, track.scrollWidth - viewport.clientWidth);
+          distanceRef.current = value;
+          return value;
+        };
 
         const horizontal = gsap.to(track, {
           x: () => -distance(),
@@ -131,63 +194,65 @@ export default function AttributesScroll() {
           scrollTrigger: {
             trigger: pin,
             start: "top top",
-            end: () =>
-              `+=${distance() + window.innerHeight * 0.2}`,
+            end: () => `+=${distance() + window.innerHeight * 0.2}`,
             pin: true,
             scrub: 1,
             anticipatePin: 1,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
-              if (progressRef.current) {
-                progressRef.current.style.transform = `scaleX(${self.progress})`;
-              }
+              setProgress(self.progress);
+              setAtStart(self.progress <= 0.001);
+              setAtEnd(self.progress >= 0.999);
             },
           },
         });
 
-        const entrance = gsap.from(Array.from(track.children), {
-          y: 54,
-          opacity: 0,
-          duration: 1,
-          stagger: 0.08,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: pin,
-            start: "top 78%",
-            once: true,
-          },
-        });
+        horizontalRef.current = horizontal.scrollTrigger ?? null;
 
         return () => {
-          entrance.scrollTrigger?.kill();
-          entrance.kill();
+          horizontalRef.current = null;
           horizontal.scrollTrigger?.kill();
           horizontal.kill();
+          gsap.set(track, { x: 0 });
         };
       }
     );
 
     return () => mm.revert();
-  }, []);
+  }, [setProgress]);
 
-  useEffect(() => {
+  const scrollByCard = (direction: 1 | -1) => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    const track = trackRef.current;
+    if (!viewport || !track) return;
 
-    const handleScroll = () => {
-      const max = viewport.scrollWidth - viewport.clientWidth;
-      const progress = max > 0 ? viewport.scrollLeft / max : 0;
+    const card = track.querySelector<HTMLElement>("[data-attribute-card]");
+    const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
+    const step =
+      (card?.getBoundingClientRect().width ?? viewport.clientWidth) + gap;
 
-      if (progressRef.current) {
-        progressRef.current.style.transform = `scaleX(${progress})`;
+    const trigger = horizontalRef.current;
+    if (trigger) {
+      const max = distanceRef.current;
+      if (max <= 0) return;
+
+      const rawX = gsap.getProperty(track, "x");
+      const currentX = -(
+        typeof rawX === "number" ? rawX : Number.parseFloat(String(rawX)) || 0
+      );
+      const targetX = Math.min(Math.max(currentX + step * direction, 0), max);
+      const top = trigger.start + (targetX / max) * (trigger.end - trigger.start);
+
+      if (window.__lenis) {
+        window.__lenis.scrollTo(top, { duration: 0.9 });
+      } else {
+        window.scrollTo({ top, behavior: "smooth" });
       }
-    };
+      return;
+    }
 
-    viewport.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => viewport.removeEventListener("scroll", handleScroll);
-  }, []);
+    viewport.scrollBy({ left: step * direction, behavior: "smooth" });
+  };
 
   return (
     <section
@@ -210,18 +275,45 @@ export default function AttributesScroll() {
             </h2>
           </div>
 
-          <p className={styles.lead}>
-            No hay atajos cuando el fuego juzga todo. Cada detalle del chorizo
-            está pensado para llegar a la parrilla en su mejor momento.
-          </p>
+          <div className={styles.headSide}>
+            <p className={styles.lead}>
+              No hay atajos cuando el fuego juzga todo. Cada detalle del chorizo
+              está pensado para llegar a la parrilla en su mejor momento.
+            </p>
+
+            <div className={styles.navButtons}>
+              <button
+                type="button"
+                className={styles.navButton}
+                onClick={() => scrollByCard(-1)}
+                disabled={atStart}
+                aria-label="Ver razón anterior"
+              >
+                <span aria-hidden="true">←</span>
+              </button>
+              <button
+                type="button"
+                className={styles.navButton}
+                onClick={() => scrollByCard(1)}
+                disabled={atEnd}
+                aria-label="Ver razón siguiente"
+              >
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div ref={viewportRef} className={styles.viewport}>
+        <div
+          ref={viewportRef}
+          className={`no-scrollbar ${styles.viewport} scroll-smooth snap-x snap-mandatory`}
+        >
           <div ref={trackRef} className={styles.track}>
             {attributes.map((attribute) => (
               <article
                 key={attribute.index}
-                className={`${styles.card} ${styles[attribute.tone]}`}
+                data-attribute-card
+                className={`${styles.card} ${styles[attribute.tone]} snap-start`}
               >
                 <div className={styles.cardTop}>
                   <span className={styles.index}>{attribute.index}</span>
@@ -247,7 +339,7 @@ export default function AttributesScroll() {
         </div>
 
         <div className={styles.footer}>
-          <span className={styles.footerLabel}>Desliza para explorar</span>
+          <span className={styles.footerLabel}>Desliza o usa las flechas</span>
           <span className={styles.progressTrack} aria-hidden="true">
             <span ref={progressRef} className={styles.progressBar} />
           </span>

@@ -144,16 +144,20 @@
 }
 
 .productIntro {
-  width: clamp(280px, 34vw, 540px);
+  width: min(100%, 680px);
+  height: 55vh;
+  min-height: 320px;
   pointer-events: auto;
 }
 
 .productFloat {
+  height: 100%;
   animation: float 9s ease-in-out infinite;
   will-change: transform;
 }
 
 .productParallax {
+  height: 100%;
   will-change: transform;
 }
 
@@ -161,7 +165,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  transform: scale(3.4);
+  transform: scale(1);
   transform-origin: 50% 50%;
   will-change: transform;
 }
@@ -169,6 +173,54 @@
 .productSlot {
   position: relative;
   width: 100%;
+  height: 100%;
+}
+
+.rotateToggle {
+  position: absolute;
+  right: var(--page-pad);
+  bottom: clamp(6.5rem, 16vh, 10rem);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.95rem;
+  border: 1px solid rgba(248, 247, 244, 0.2);
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.5);
+  backdrop-filter: blur(12px);
+  color: rgba(248, 247, 244, 0.72);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  pointer-events: auto;
+  transition:
+    color 0.35s var(--ease-organic),
+    border-color 0.35s var(--ease-organic),
+    background 0.35s var(--ease-organic),
+    transform 0.35s var(--ease-organic);
+}
+
+.rotateToggle svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rotateToggle:hover {
+  transform: translateY(-2px);
+  background: rgba(20, 20, 20, 0.78);
+}
+
+.rotateActive {
+  border-color: rgba(229, 169, 60, 0.55);
+  color: var(--gold);
+}
+
+@media (min-width: 768px) {
+  .productIntro {
+    height: 75vh;
+  }
 }
 
 .footer {
@@ -308,8 +360,19 @@
   }
 
   .productIntro {
-    width: clamp(190px, 52vw, 280px);
+    width: min(88vw, 420px);
+    height: 52vh;
+    min-height: 280px;
     translate: -4vw 0;
+  }
+
+  .rotateToggle {
+    right: 1rem;
+    bottom: 7.5rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.48rem;
+    letter-spacing: 0.12em;
   }
 
   .footer {

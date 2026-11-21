@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import HeroModelViewer from "./HeroModelViewer";
 import ModelViewer from "./ModelViewer";
 import type { ProductMedia, ProductModelMedia } from "./product-media";
 import styles from "./ProductViewer.module.css";
@@ -18,9 +19,9 @@ type ProductViewerProps = {
   subline?: string;
   media?: ProductMedia;
   viewIndex?: number;
-  showIngredients?: boolean;
   pointerReactive?: boolean;
-  heroIntroBoost?: boolean;
+  dragEnabled?: boolean;
+  fill?: boolean;
 };
 
 export default function ProductViewer({
@@ -33,9 +34,9 @@ export default function ProductViewer({
   subline = "Parrilla · Artesanal",
   media,
   viewIndex = 1,
-  showIngredients = false,
   pointerReactive = false,
-  heroIntroBoost = false,
+  dragEnabled = true,
+  fill = false,
 }: ProductViewerProps) {
   const [mediaFailed, setMediaFailed] = useState(false);
 
@@ -111,14 +112,24 @@ export default function ProductViewer({
       );
     }
 
+    if (variant === "hero") {
+      return (
+        <HeroModelViewer
+          media={media as ProductModelMedia}
+          className={styles.mediaLayer}
+          dragEnabled={dragEnabled}
+          pointerReactive={pointerReactive}
+          onError={() => setMediaFailed(true)}
+        />
+      );
+    }
+
     return (
       <ModelViewer
         media={media as ProductModelMedia}
         className={styles.mediaLayer}
         viewIndex={viewIndex}
-        showIngredients={showIngredients}
         pointerReactive={pointerReactive}
-        heroIntroBoost={heroIntroBoost}
         onError={() => setMediaFailed(true)}
       />
     );
@@ -127,8 +138,8 @@ export default function ProductViewer({
   return (
     <div
       className={`${styles.scene} ${styles[variant]} ${styles[tone]} ${
-        className ?? ""
-      }`}
+        fill ? styles.fill : ""
+      } ${className ?? ""}`}
       aria-hidden="true"
     >
       <span className={styles.halo} aria-hidden="true" />

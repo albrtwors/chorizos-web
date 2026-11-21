@@ -2,11 +2,13 @@
 
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { viewPointer } from "./view-pointer";
 import styles from "./SharedModelCanvas.module.css";
 
 export default function SharedModelCanvas() {
+  const [inView, setInView] = useState(true);
+
   useEffect(() => {
     const update = (event: PointerEvent) => {
       viewPointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -17,14 +19,27 @@ export default function SharedModelCanvas() {
     return () => window.removeEventListener("pointermove", update);
   }, []);
 
+  useEffect(() => {
+    const target = document.getElementById("catalogo");
+    if (!target || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "160px" }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className={styles.stage} aria-hidden="true">
       <Canvas
         dpr={[1, 1.5]}
-        frameloop="always"
+        frameloop={inView ? "always" : "never"}
         camera={{
-          fov: 40,
-          position: [0, 0.35, 7.5],
+          fov: 42,
+          position: [0, 0.25, 7.6],
           near: 0.1,
           far: 100,
         }}

@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type PointerEvent,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ProductViewer from "./ProductViewer";
@@ -46,6 +39,7 @@ function ViewerSlot({
         weight={product.weight}
         media={media}
         viewIndex={viewIndex}
+        fill
       />
     </div>
   );
@@ -82,19 +76,16 @@ function OrderButton({
 export default function ProductShowcase() {
   const sectionRef = useRef<HTMLElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef({
-    active: false,
-    startX: 0,
-    scroll: 0,
-    moved: false,
-  });
+  const horizontalRef = useRef<ScrollTrigger | null>(null);
+  const distanceRef = useRef(0);
 
-  const [dragging, setDragging] = useState(false);
   const [progress, setProgress] = useState(0);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
 
   const updateProgress = useCallback(() => {
+    if (horizontalRef.current) return;
+
     const viewport = viewportRef.current;
     if (!viewport) return;
 
@@ -103,7 +94,7 @@ export default function ProductShowcase() {
 
     setProgress(Math.min(Math.max(next, 0), 1));
     setAtStart(viewport.scrollLeft <= 8);
-    setAtEnd(viewport.scrollLeft >= max - 8);
+    setAtEnd(max <= 8 || viewport.scrollLeft >= max - 8);
   }, []);
 
   useEffect(() => {
@@ -186,75 +177,87 @@ export default function ProductShowcase() {
       return () => ctx.revert();
     });
 
+    mm.add(
+      "(min-width: 900px) and (prefers-reduced-motion: no-preference)",
+      () => {
+        const track = sectionRef.current?.querySelector<HTMLElement>(
+          "[data-showcase-track]"
+        );
+        const viewport = viewportRef.current;
+        if (!track || !viewport) return;
+
+        const distance = () => {
+          const value = Math.max(0, track.scrollWidth - viewport.clientWidth);
+          distanceRef.current = value;
+          return value;
+        };
+
+        const horizontal = gsap.to(track, {
+          x: () => -distance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: viewport,
+            start: "top top",
+            end: () => `+=${distance() + window.innerHeight * 0.2}`,
+            pin: true,
+            scrub: 1,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              setProgress(self.progress);
+              setAtStart(self.progress <= 0.001);
+              setAtEnd(self.progress >= 0.999);
+            },
+          },
+        });
+
+        horizontalRef.current = horizontal.scrollTrigger ?? null;
+
+        return () => {
+          horizontalRef.current = null;
+          horizontal.scrollTrigger?.kill();
+          horizontal.kill();
+          gsap.set(track, { x: 0 });
+        };
+      }
+    );
+
     return () => mm.revert();
   }, []);
 
-  const scrollByPage = (direction: 1 | -1) => {
+  const scrollByCard = (direction: 1 | -1) => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    const track = sectionRef.current?.querySelector<HTMLElement>(
+      "[data-showcase-track]"
+    );
+    if (!viewport || !track) return;
 
-    const amount = Math.min(viewport.clientWidth * 0.72, 640);
-    viewport.scrollBy({ left: amount * direction, behavior: "smooth" });
-  };
+    const card = track.querySelector<HTMLElement>("[data-catalog-card]");
+    const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
+    const step =
+      (card?.getBoundingClientRect().width ?? viewport.clientWidth) + gap;
 
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") return;
+    const trigger = horizontalRef.current;
+    if (trigger) {
+      const max = distanceRef.current;
+      if (max <= 0) return;
 
-    const target = event.target as Element | null;
-    if (target?.closest("a, button, input, select, textarea, [data-drag-ignore]")) {
+      const rawX = gsap.getProperty(track, "x");
+      const currentX = -(
+        typeof rawX === "number" ? rawX : Number.parseFloat(String(rawX)) || 0
+      );
+      const targetX = Math.min(Math.max(currentX + step * direction, 0), max);
+      const top = trigger.start + (targetX / max) * (trigger.end - trigger.start);
+
+      if (window.__lenis) {
+        window.__lenis.scrollTo(top, { duration: 0.9 });
+      } else {
+        window.scrollTo({ top, behavior: "smooth" });
+      }
       return;
     }
 
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    dragState.current = {
-      active: true,
-      startX: event.clientX,
-      scroll: viewport.scrollLeft,
-      moved: false,
-    };
-
-    viewport.setPointerCapture(event.pointerId);
-    setDragging(true);
-  };
-
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!dragState.current.active) return;
-
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const delta = event.clientX - dragState.current.startX;
-
-    if (Math.abs(delta) > 4) {
-      dragState.current.moved = true;
-    }
-
-    viewport.scrollLeft = dragState.current.scroll - delta;
-  };
-
-  const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
-    if (!dragState.current.active) return;
-
-    dragState.current.active = false;
-    setDragging(false);
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    window.setTimeout(() => {
-      dragState.current.moved = false;
-    }, 0);
-  };
-
-  const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
-    if (!dragState.current.moved) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    dragState.current.moved = false;
+    viewport.scrollBy({ left: step * direction, behavior: "smooth" });
   };
 
   return (
@@ -293,7 +296,7 @@ export default function ProductShowcase() {
             <button
               type="button"
               className={styles.control}
-              onClick={() => scrollByPage(-1)}
+              onClick={() => scrollByCard(-1)}
               disabled={atStart}
               aria-label="Ver productos anteriores"
             >
@@ -302,7 +305,7 @@ export default function ProductShowcase() {
             <button
               type="button"
               className={styles.control}
-              onClick={() => scrollByPage(1)}
+              onClick={() => scrollByCard(1)}
               disabled={atEnd}
               aria-label="Ver productos siguientes"
             >
@@ -314,19 +317,17 @@ export default function ProductShowcase() {
 
       <div
         ref={viewportRef}
-        className={`${styles.viewport} ${dragging ? styles.dragging : ""}`}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-        onClickCapture={handleClickCapture}
+        className={`no-scrollbar ${styles.viewport} scroll-smooth snap-x snap-mandatory`}
       >
-        <div className={styles.track}>
+        <div data-showcase-track className={styles.track}>
           <article
-            className={`${styles.card} ${styles.featureCard}`}
+            data-catalog-card
+            className={`${styles.card} ${styles.featureCard} snap-start`}
             data-showcase-reveal
           >
-            <div className={styles.featureViewer}>
+            <div
+              className={`relative aspect-square w-full overflow-hidden rounded-2xl ${styles.featureViewer}`}
+            >
               <span
                 className={styles.cardIndex}
                 data-showcase-parallax
@@ -381,10 +382,13 @@ export default function ProductShowcase() {
           {products.map((product) => (
             <article
               key={product.index}
-              className={`${styles.card} ${styles.productCard}`}
+              data-catalog-card
+              className={`${styles.card} ${styles.productCard} snap-start`}
               data-showcase-reveal
             >
-              <div className={styles.packStage}>
+              <div
+                className={`relative aspect-square w-full overflow-hidden rounded-2xl ${styles.packStage}`}
+              >
                 <span
                   className={styles.cardIndex}
                   data-showcase-parallax
@@ -420,7 +424,8 @@ export default function ProductShowcase() {
           ))}
 
           <article
-            className={`${styles.card} ${styles.ctaCard}`}
+            data-catalog-card
+            className={`${styles.card} ${styles.ctaCard} snap-start`}
             data-showcase-reveal
           >
             <span className={styles.cardIndex}>06</span>
@@ -452,7 +457,7 @@ export default function ProductShowcase() {
       </div>
 
       <div className={styles.caption}>
-        <span className={styles.captionLabel}>Arrastra o desliza</span>
+        <span className={styles.captionLabel}>Desliza para explorar</span>
         <span className={styles.progressTrack} aria-hidden="true">
           <span
             className={styles.progressBar}
