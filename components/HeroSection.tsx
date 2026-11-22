@@ -56,22 +56,6 @@ export default function HeroSection() {
         if (frame) {
           gsap.set(frame, { scale: 1, x: 0, y: 0 });
         }
-        const frameRect = frame?.getBoundingClientRect();
-        const fullscreenScale = frameRect
-          ? Math.min(
-              Math.max(
-                window.innerWidth / frameRect.width,
-                window.innerHeight / frameRect.height
-              ) * 1.16,
-              1.3
-            )
-          : 1;
-        const fullscreenX = frameRect
-          ? window.innerWidth / 2 - (frameRect.left + frameRect.width / 2)
-          : 0;
-        const fullscreenY = frameRect
-          ? window.innerHeight / 2 - (frameRect.top + frameRect.height / 2)
-          : 0;
         const intro = gsap.timeline({
           defaults: { ease: "power4.out" },
           delay: 0.15,
@@ -95,22 +79,6 @@ export default function HeroSection() {
               duration: 1.6,
             },
             0.32
-          )
-          .fromTo(
-            frame,
-            {
-              scale: fullscreenScale,
-              x: fullscreenX,
-              y: fullscreenY,
-            },
-            {
-              scale: 1,
-              x: 0,
-              y: 0,
-              duration: 1.9,
-              ease: "power4.out",
-            },
-            0.14
           )
           .from(
             footerItems,
@@ -157,7 +125,6 @@ export default function HeroSection() {
         });
 
         gsap.to(productIntroRef.current, {
-          scale: 0.76,
           rotate: -7,
           yPercent: -8,
           ease: "none",

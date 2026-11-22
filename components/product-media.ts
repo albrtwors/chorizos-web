@@ -67,7 +67,7 @@ export const heroModelMedia: ProductModelMedia = {
   ...exampleModelMedia,
   cameraOrbit: "0deg 75deg 100%",
   fieldOfView: 42,
-  displayScale: 3.6,
+  displayScale: 2.75,
   rotationSpeed: 0.2,
 };
 

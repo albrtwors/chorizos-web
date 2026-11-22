@@ -12,20 +12,10 @@ if (typeof window !== "undefined") {
 
 function DragControls({ enabled }: { enabled: boolean }) {
   const { gl } = useThree();
-  const [isTouch, setIsTouch] = useState(false);
 
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 767px) and (hover: none)");
-    const sync = () => setIsTouch(query.matches);
-
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
-
-  useEffect(() => {
-    gl.domElement.style.touchAction = enabled && !isTouch ? "none" : "pan-y";
-  }, [enabled, isTouch, gl]);
+    gl.domElement.style.touchAction = enabled ? "none" : "pan-y";
+  }, [enabled, gl]);
 
   return (
     <OrbitControls
@@ -77,7 +67,8 @@ export default function HeroModelViewer({
     <div
       ref={stageRef}
       className={className}
-      style={{ pointerEvents: dragEnabled ? "auto" : "none" }}
+      data-lenis-prevent-touch={dragEnabled ? "" : undefined}
+      style={{ touchAction: dragEnabled ? "none" : "pan-y" }}
     >
       <Canvas
         dpr={[1, 1.5]}
