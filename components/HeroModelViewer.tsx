@@ -68,7 +68,10 @@ export default function HeroModelViewer({
       ref={stageRef}
       className={className}
       data-lenis-prevent-touch={dragEnabled ? "" : undefined}
-      style={{ touchAction: dragEnabled ? "none" : "pan-y" }}
+      style={{
+        pointerEvents: dragEnabled ? "auto" : "none",
+        touchAction: dragEnabled ? "none" : "pan-y",
+      }}
     >
       <Canvas
         dpr={[1, 1.5]}

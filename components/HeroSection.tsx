@@ -24,8 +24,8 @@ export default function HeroSection() {
   const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-  useEffect(() => {
-    const query = window.matchMedia("(max-width: 767px) and (hover: none)");
+  useIsomorphicLayoutEffect(() => {
+    const query = window.matchMedia("(max-width: 767px)");
     const sync = () => setDragEnabled(!query.matches);
 
     sync();

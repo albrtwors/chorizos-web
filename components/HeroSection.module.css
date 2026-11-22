@@ -147,7 +147,7 @@
   width: min(100%, 680px);
   height: 55vh;
   min-height: 320px;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .productFloat {
